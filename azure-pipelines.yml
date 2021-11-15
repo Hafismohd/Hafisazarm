@@ -4,22 +4,29 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+- "*"
 
-pool:
-  vmImage: ubuntu-latest
-
-steps:
-- task: AzureResourceManagerTemplateDeployment@3
-  inputs:
-    deploymentScope: 'Resource Group'
-    azureResourceManagerConnection: 'AzureRmPipeline-conn'
-    subscriptionId: '3d24dbca-535f-4f44-aaf2-0ed2c1e9a0e3'
-    action: 'Create Or Update Resource Group'
-    resourceGroupName: 'hafisdevRG'
-    location: 'Canada East'
-    templateLocation: 'URL of the file'
-    csmFileLink: 'https://raw.githubusercontent.com/Hafismohd/Hafisazarm/master/CreateWebApp/azuredeploy.json'
-    overrideParameters: '-projectName Hafisazarm'
-    deploymentMode: 'Incremental'
-    deploymentName: 'hafispipedeploymnet'
+stages:
+  - stage: test
+    jobs:
+      - job: 'validateandtest'
+        pool:
+          vmimage: windows-latest
+        steps:
+        - task: AzureResourceManagerTemplateDeployment@3
+          inputs:
+            deploymentScope: 'Resource Group'
+            azureResourceManagerConnection: 'hafisdevops'
+            subscriptionId: '3d24dbca-535f-4f44-aaf2-0ed2c1e9a0e3'
+            action: 'Create Or Update Resource Group'
+            resourceGroupName: 'hafisdevRG'
+            location: 'East US'
+            templateLocation: 'Linked artifact'
+            csmFile: '$(Build.SourcesDirectory)/StorageAccount/azuredeploy.json'
+            csmParametersFile: '$(Build.SourcesDirectory)/StorageAccount/azuredeploy.parameters.json'
+            deploymentMode: 'Incremental'
+            deploymentName: 'Validation only'
+        - task: PowerShell@2
+          inputs:
+            targetType: 'inline'
+            script: 'Install-Module Az.Resources -RequiredVersion 1.12.1-preview -AllowPrerelease -Force -Scope CurrentUser'
